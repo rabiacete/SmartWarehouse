@@ -72,7 +72,12 @@ npm run dev
 Uygulamayı tarayıcınızdan **`http://localhost:5173`** adresine giderek hemen kullanmaya başlayabilirsiniz.
 
 ---
+### Güvenlik & Konfigürasyon Notu
+Bu projede "Developer Experience (DX)" gözetildiği için; projeyi inceleyecek olan uzmanların lokal ortamlarında ek bir konfigürasyon (User Secrets, .env vb.) ile uğraşmadan tek tıkla projeyi çalıştırabilmeleri adına 
 
+appsettings.json
+ dosyası ve içindeki localhost veritabanı bağlantı bilgileri (Connection String) bilinçli olarak GitHub'da bırakılmıştır. Gerçek bir production senaryosunda bu hassas bilgiler Azure Key Vault, AWS Secrets Manager veya CI/CD pipeline üzerindeki Environment Variable'lar ile yönetilir ve asla kaynak kod kontrolüne dahil edilmez.
+ 
 ##  Daha Fazla Detay İçin
 
 Uygulamanın mimari kararları, tasarım seçimleri, yapay zekanın (AI) projedeki yeri ve karşılaşılan çevresel hataların nasıl çözüldüğüne dair teknik tüm okumalar için ana dizinde bulunan **[CALISMA_RAPORU.md](./CALISMA_RAPORU.md)** dosyasını inceleyebilirsiniz.
