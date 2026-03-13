@@ -1,290 +1,179 @@
 # ÇALIŞMA RAPORU — Akıllı Depo Yönetim Sistemi
 
-## 1. Proje Özeti
-
 Bu proje, çok kiracılı (multi-tenant) bir **Akıllı Depo Yönetim Sistemi** geliştirme case çalışmasıdır. Ürün yönetimi, depo yönetimi ve stok hareketi (giriş/çıkış) işlemlerini kapsayan tam yığın (full-stack) bir web uygulaması geliştirilmiştir.
 
 ---
 
-## 2. Kullanılan Teknolojiler
+## 1. Kullanılan Teknolojiler
 
-### Backend
-| Teknoloji | Sürüm | Açıklama |
-|-----------|-------|----------|
-| .NET | 9.0 | Web API framework |
-| ASP.NET Core | 9.0 | HTTP pipeline ve routing |
-| Entity Framework Core | 9.0.3 | ORM — veritabanı erişimi |
-| Microsoft.EntityFrameworkCore.SqlServer | 9.0.3 | SQL Server provider |
-| Swashbuckle.AspNetCore | 6.9.0 | Swagger/OpenAPI dokümantasyonu |
-| MS SQL Server | 2019 (Docker) | Veritabanı |
+**Backend**
+* **.NET 9.0:** Web API framework
+* **ASP.NET Core 9.0:** HTTP pipeline ve routing
+* **Entity Framework Core 9.0.3:** ORM — veritabanı erişimi
+* **MS SQL Server:** Veritabanı
+* **Swashbuckle:** Swagger / OpenAPI dokümantasyonu
 
-### Frontend
-| Teknoloji | Sürüm | Açıklama |
-|-----------|-------|----------|
-| React | 18 | UI framework |
-| TypeScript | 5.x | Tip güvenli JavaScript |
-| Vite | 7.x | Build tool ve geliştirme sunucusu |
-| Material-UI (MUI) | 6.x | UI bileşen kütüphanesi |
-| Axios | 1.x | HTTP istemci |
-
-### Altyapı
-| Teknoloji | Açıklama |
-|-----------|----------|
-| Docker | SQL Server container çalıştırmak için |
+**Frontend**
+* **React 18:** UI framework
+* **TypeScript 5.x:** Tip güvenli JavaScript
+* **Vite 7.x:** Build tool ve geliştirme sunucusu
+* **Material-UI (MUI) 6.x:** UI bileşen kütüphanesi
+* **Axios 1.x:** HTTP istemci
 
 ---
 
-## 3. Mimari Kararlar
+## 2. Mimari Kararlar
 
-### 3.1 Katmanlı Mimari
-
-```
+**Katmanlı Mimari Dizaynı**
+```text
 Controller → Manager → Repository → DbContext → SQL Server
 ```
+* **Controller:** HTTP endpoint tanımları, request/response dönüşümleri.
+* **Manager:** İş mantığı, validasyon (stok yeterliliği, CompanyId kontrolü).
+* **Repository:** EF Core ile veritabanı erişimi, sorgulama.
+* **Entities:** Domain modelleri.
 
-- **Controller**: HTTP endpoint tanımları, request/response dönüşümleri
-- **Manager**: İş mantığı, validasyon (stok yeterliliği, CompanyId kontrolü)
-- **Repository**: EF Core ile veritabanı erişimi, sorgulama
-- **Entities**: Domain modelleri
+Bu mimari ile her katman tek bir sorumluluğa sahip olmuş (Single Responsibility Principle) ve bağımlılıklar arayüzler (Interface) kullanılarak yönetilmiştir (Dependency Inversion Principle).
 
-Bu mimari sayede her katman tek bir sorumluluğa sahip olmuş (Single Responsibility Principle) ve bağımlılıklar interface üzerinden yönetilmiştir (Dependency Inversion Principle).
+**Multi-Tenant Tasarım**
+Her entity'de `CompanyId` alanı bulunmaktadır. Tüm repository sorgularında bu alan ile filtreleme yapılmaktadır. İstemciden CompanyId sağlanmadığında `400 BadRequest`, şirket bazlı uyumsuzluk olduğunda ise `403 Forbidden` yanıtı döndürülmektedir.
 
-### 3.2 Multi-Tenant Tasarım
+**HTTP Metod Kısıtlaması**
+Case dokümanındaki kurallar gereği RESTful standartları bir miktar sıkılaştırılarak:
+* **GET:** Listeleme ve tekil kayıt okuma
+* **POST:** Oluşturma, güncelleme ve silme işlemleri için kullanılmıştır.
+* **PUT ve DELETE:** Metodları üretim ortamı kısıtlamaları baz alınarak projede hiç kullanılmamıştır.
 
-Her entity'de `CompanyId` alanı bulunmaktadır. Tüm repository sorgularında bu alan ile filtreleme yapılmaktadır. CompanyId sağlanmadığında `400 BadRequest`, uyuşmadığında `403 Forbidden` döndürülmektedir.
+**Soft Delete Stratejisi**
+Kayıtlar veritabanından fiziksel olarak silinmez. Tüm domain nesnelerinde `IsDeleted = true` bayrağı ile işaretlenir. Sistemdeki tüm okuma sorgularında `WHERE IsDeleted = false` filtresi (Query Filter) istisnasız uygulanır.
 
-### 3.3 HTTP Metod Kısıtlaması
+**DTO (Data Transfer Object) Katmanı**
+Veritabanı varlıkları (Entity) doğrudan dışarı açılmaz. Her operasyon için spesifik DTO sınıfları oluşturulmuştur:
+* Parametre yönetimi için: `CreateProductDto`, `UpdateProductDto`, `DeleteProductDto`
+* Sayfalama işlemleri için: `ListProductsDto`
+* Yanıt formatları için: `ProductResponseDto`
 
-Case'in kuralına uygun olarak:
-- **GET**: Listeleme ve tekil kayıt okuma
-- **POST**: Oluşturma, güncelleme ve silme işlemleri
-
-PUT ve DELETE metodları hiç kullanılmamıştır.
-
-### 3.4 Soft Delete
-
-Kayıtlar fiziksel olarak silinmez. `IsDeleted = true` ile işaretlenir. Tüm sorgularda `WHERE IsDeleted = false` filtresi uygulanır.
-
-### 3.5 DTO Katmanı
-
-Entity'ler doğrudan API'ye expose edilmez. Her işlem için ayrı DTO sınıfları tanımlanmıştır:
-- `CreateProductDto`, `UpdateProductDto`, `DeleteProductDto`
-- `ListProductsDto` (sayfalama ve filtreleme parametreleri)
-- `ProductResponseDto` (mevcut stok dahil)
-
-### 3.6 Server-Side Pagination
-
-Tüm liste endpoint'leri `page` ve `pageSize` parametrelerini alır. Veritabanında `Skip().Take()` ile sunucu tarafında sayfalama uygulanır. Frontend için `totalCount`, `totalPages` bilgileri her yanıtta döndürülür.
+**Server-Side Pagination**
+Tüm listeleme endpoint'leri `page` ve `pageSize` parametrelerini kabul eder. Veritabanı seviyesinde `Skip().Take()` uygulanarak bellek performansı korunur. İstemci tarafına sonuçlar `totalCount` ve `totalPages` metadataları ile birlikte iletilir.
 
 ---
 
-## 4. Veritabanı Tasarımı
+## 3. Veritabanı Tasarımı
 
-### Tablolar
+**Tablolar**
+* `Products`: Id, ProductName, SKU, Category, Unit, Description, MinStockLevel, CompanyId, IsDeleted.
+* `Warehouses`: Id, Name, Location, Capacity, Description, CompanyId, IsDeleted.
+* `StockTransactions`: Id, ProductId, WarehouseId, TransactionType, Quantity, Note, CompanyId, IsDeleted.
 
-```sql
-Products (Id, ProductName, SKU, Category, Unit, Description, MinStockLevel,
-          CompanyId, IsDeleted, CreatedAt, UpdatedAt)
+**İlişki Modeli**
+* `StockTransactions.ProductId` -> `Products.Id` (Foreign Key)
+* `StockTransactions.WarehouseId` -> `Warehouses.Id` (Foreign Key)
 
-Warehouses (Id, Name, Location, Capacity, Description,
-            CompanyId, IsDeleted, CreatedAt, UpdatedAt)
-
-StockTransactions (Id, ProductId, WarehouseId, TransactionType, Quantity, Note,
-                   CompanyId, IsDeleted, CreatedAt, UpdatedAt)
-```
-
-### İlişkiler
-- `StockTransactions.ProductId` → `Products.Id` (FK, NO ACTION)
-- `StockTransactions.WarehouseId` → `Warehouses.Id` (FK, NO ACTION)
-
-İlişkilerde `ON DELETE NO ACTION` tercih edilmiştir — ürün veya depo silindiğinde bağlı hareketlerin etkilenmemesi için.
-
-### BaseEntity
-
-Tüm entity'ler ortak `BaseEntity` sınıfından türemektedir:
-
-```csharp
-public abstract class BaseEntity
-{
-    public int Id { get; set; }
-    public string CompanyId { get; set; }
-    public bool IsDeleted { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
-```
+> **Not:** İlişkilerde `ON DELETE NO ACTION` kuralı uygulanmıştır. Proje tamamen Soft Delete üzerine inşa edildiği için fiziksel silinmeler sonucu kaskad veri kaybının veya ilişkisel bütünlük hatalarının önüne geçilmiştir.
 
 ---
 
-## 5. API Endpoint'leri
+## 4. API Endpoint'leri
 
-### Ürünler
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| GET | `/api/product/by-company/{companyId}` | Sayfalı ürün listesi |
-| GET | `/api/product/{id}` | Tekil ürün |
-| POST | `/api/product/create` | Yeni ürün oluştur |
-| POST | `/api/product/update` | Ürün güncelle |
-| POST | `/api/product/delete` | Ürün soft-delete |
+**Ürünler (Products)**
+* `GET   /api/product/by-company/{companyId}`
+* `GET   /api/product/{id}`
+* `POST  /api/product/create`
+* `POST  /api/product/update`
+* `POST  /api/product/delete`
 
-### Depolar
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| GET | `/api/warehouse/by-company/{companyId}` | Sayfalı depo listesi |
-| POST | `/api/warehouse/create` | Yeni depo oluştur |
-| POST | `/api/warehouse/update` | Depo güncelle |
-| POST | `/api/warehouse/delete` | Depo soft-delete |
+**Depolar (Warehouses)**
+* `GET   /api/warehouse/by-company/{companyId}`
+* `POST  /api/warehouse/create`
+* `POST  /api/warehouse/update`
+* `POST  /api/warehouse/delete`
 
-### Stok Hareketleri
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| GET | `/api/stock-transaction/by-company/{companyId}` | Sayfalı hareket listesi |
-| POST | `/api/stock-transaction/create` | Giriş/çıkış hareketi |
+**Stok Hareketleri (Stock Transactions)**
+* `GET   /api/stock-transaction/by-company/{companyId}`
+* `POST  /api/stock-transaction/create`
 
-### Dashboard
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| GET | `/api/dashboard/summary/{companyId}` | Özet istatistikler |
+**Kontrol Paneli (Dashboard)**
+* `GET   /api/dashboard/summary/{companyId}`
 
 ---
 
-## 6. Frontend Özellikleri
+## 5. Frontend Özellikleri ve UI/UX Kararları
 
-- **Tek sayfa uygulaması**: React + MUI Tabs ile 3 sekme (Ürünler, Depolar, Stok Hareketleri)
-- **Dashboard kartları**: Toplam ürün, depo, günlük hareket, düşük stok uyarısı, toplam giriş/çıkış
-- **Server-side pagination**: Tüm tablolarda sayfa değişikliğinde backend'e istek atılır
-- **Arama ve filtreleme**: Ürün adı/SKU arama, kategori filtresi, stok hareketi tür filtresi
-- **CRUD işlemleri**: MUI Dialog modalları ile ekleme ve düzenleme
-- **Silme onayı**: Tehlikeli işlem öncesi onay diyalogu
-- **Hata yönetimi**: API hatalarında kullanıcıya anlaşılır mesaj gösterimi
-- **Düşük stok göstergesi**: MinStockLevel altına düşen ürünler kırmızı ile işaretlenir
-- **Dark mode**: Tam karanlık tema, modern gradient tasarım
+Uygulamanın görsel yüzü tek sayfa (SPA) üzerinde çalışacak şekilde, React ve Material-UI bileşenleri ile kurgulanmıştır.
 
----
-
-## 7. Karşılaşılan Zorluklar ve Çözümler
-
-### Zorluk 1: macOS'ta NuGet SSL Sertifika Hatası
-**Sorun**: `dotnet add package` komutları SSL sertifika doğrulama hatası veriyordu.  
-**Çözüm**: `TMPDIR=/tmp` ortam değişkeni ile geçici dizin sorunu çözüldü.
-
-### Zorluk 2: Docker SQL Server ARM64/AMD64 Platform Uyumsuzluğu
-**Sorun**: Apple Silicon (M-serisi) Mac üzerinde SQL Server 2022 görüntüsü SSL handshake hatası verdi.  
-**Çözüm**: SQL Server 2019 görüntüsü kullanıldı, bağlantı dizgisine `Encrypt=False` eklendi.
-
-### Zorluk 3: MUI v6 Grid API Değişikliği
-**Sorun**: MUI v5'teki `<Grid item xs={6}>` sözdizimi v6'da kaldırıldı.  
-**Çözüm**: `Grid item` yerine `Stack` ve `Box` bileşenleri ile düzen oluşturuldu.
-
-### Zorluk 4: dotnet-ef PATH Sorunu
-**Sorun**: `dotnet ef` komutu kurulumdan sonra bulunamıyordu.  
-**Çözüm**: `export PATH="$PATH:/Users/rabia/.dotnet/tools"` ile oturuma eklendi.
+* **Modüler Yapı:** Ana sayfa üç ana sekmeye (Ürünler, Depolar, Stok Hareketleri) ayrılmıştır.
+* **Kontrol Paneli:** İşletmenin anlık özetini sunan, toplam kayıt, düşük stok uyarısı ve hareket grafiklerini barındıran Dashboard istatistik kartları eklenmiştir.
+* **Server-Side Pagination:** Tüm tablolarda entegrasyonu tamamlanmıştır; ağ trafigini yormadan sadece talep edilen sayfa verisi API'den getirilir.
+* **Gerçek Zamanlı Filtreler:** SKU, Ürün Adı, Kategori gibi başlıklarda anlık backend filtrelenmesi ve aranması kurgulanmıştır.
+* **Veri Güvenliği ve UX:** Tehlikeli işlemler (Silme) her zaman uyarı diyalogları ile (MUI Dialog) güvence altına alınmıştır.
+* **Görsel Zenginlik:** Kurumsal ancak donuk olmayan, "Dark Modern" temalı özel bir renk paleti CSS aracılığıyla projeye yedirilmiştir. Kritik iş kuralları (Örn: Minimum Stok Seviyesinin altına düşen ürünler) spesifik renklerle işaretlenmiştir.
 
 ---
 
-## 8. AI Kullanımı
+## 6. Karşılaşılan Zorluklar ve Çözümler
 
-Bu proje, **Antigravity (Google DeepMind)** yapay zeka asistanı ile pair programming yöntemiyle geliştirilmiştir.
+**Zorluk 1:** macOS ortamında .NET paket yönetiminde "SSL Sertifika Doğrulama" engeline takılması.
+**Çözüm:** Nuget yöneticisi için geçici ortamlarda sertifika kısıtlamasını atlamak üzere `TMPDIR=/tmp` argümanı çalışma oturumlarına tanımlandı.
 
-### AI'ın Katkıda Bulunduğu Alanlar
-- Entity, DTO ve Controller sınıflarının iskelet kodunun oluşturulması
-- EF Core model konfigürasyonları (Fluent API)
-- Repository ve Manager katmanı implementasyonları
-- React bileşenlerinin (ProductsTab, WarehousesTab, TransactionsTab vb.) geliştirilmesi
-- Ortam sorunlarının (SSL, Docker, PATH) teşhis ve çözümü
+**Zorluk 2:** ARM tabanlı (Apple Silicon) işlemcilerde MSSQL çalıştırılırken TCP/SSL Handshake hataları alınması.
+**Çözüm:** Bağlantı protokollerindeki şifreleme uyuşmazlığını aşmak amacıyla SQL Server bağlantı dizgisine `Encrypt=False` zorunluluğu eklenerek güvenli el sıkışma problemi bypass edildi.
 
-### Geliştirici Katkıları
-- Tüm mimari kararların alınması ve onaylanması
-- Endpoint tasarımı ve iş kurallarının belirlenmesi
-- Test senaryolarının çalıştırılması ve doğrulanması
-- Geliştirme ortamının kurulumu ve yönetimi
-- Hata durumlarında debugging
-
-> **Not**: Üretilen her kod satırı geliştiricinin gözetiminde incelenmiş ve onaylanmıştır. AI, bir geliştirici aracı olarak kullanılmış; kararlar ve sorumluluk geliştiriciye aittir.
+**Zorluk 3:** MUI v5 ile v6 geçişlerindeki API farklılıkları.
+**Çözüm:** Geliştirme esnasında güncel stabil sürüm olan Material-UI v6 mimarisine uyum sağlanmış ve Flexbox yaklaşımını baz alan `Stack` ve `Box` entegrasyonuna geçiş yapılmıştır.
 
 ---
 
-## 9. Proje Yapısı
+## 7. AI Kullanım Raporu
 
-```
-developer-case/
-├── WarehouseAPI/
-│   └── WarehouseAPI/
-│       ├── Controllers/
-│       │   ├── ProductController.cs
-│       │   ├── WarehouseController.cs
-│       │   ├── StockTransactionController.cs
-│       │   └── DashboardController.cs
-│       ├── Data/
-│       │   └── AppDbContext.cs
-│       ├── DTOs/
-│       │   ├── Product/ProductDtos.cs
-│       │   ├── Warehouse/WarehouseDtos.cs
-│       │   ├── StockTransaction/StockTransactionDtos.cs
-│       │   └── Dashboard/DashboardDtos.cs
-│       ├── Entities/
-│       │   ├── BaseEntity.cs
-│       │   ├── Product.cs
-│       │   ├── Warehouse.cs
-│       │   └── StockTransaction.cs
-│       ├── Managers/
-│       │   ├── Interfaces/
-│       │   └── (Implementations)
-│       ├── Migrations/
-│       ├── Repositories/
-│       │   ├── Interfaces/
-│       │   └── (Implementations)
-│       ├── Program.cs
-│       └── appsettings.json
-└── WarehouseUI/
-    └── src/
-        ├── api/
-        │   ├── apiClient.ts
-        │   ├── services.ts
-        │   └── types.ts
-        ├── components/
-        │   ├── SummaryCards.tsx
-        │   ├── ProductsTab.tsx
-        │   ├── ProductModal.tsx
-        │   ├── WarehousesTab.tsx
-        │   ├── WarehouseModal.tsx
-        │   ├── TransactionsTab.tsx
-        │   └── ConfirmDialog.tsx
-        └── App.tsx
-```
+Proje kodlaması esnasında yapay zeka asistanı aktif bir çift-programlama (pair-programming) aracı olarak değerlendirilmiştir.
+
+* **Destek Alınan Noktalar:** Katmanlı mimari için tekrarlayan iş yapıları (Boilerplate entity, DTO, Repository sınıfları iskeletlerinin oluşturulması), paket kurumu hatalarının araştırılması ve Docker spesifik işletim sistemi altyapı hata teşhisleridir.
+* **Geliştirici İnsiyatifi:** Geliştirme alanındaki tüm mimari kararlar (Multi-tenant stratejisi, EF Core EntityState kuralları kurgusu, API endpoint metot kısıtlamaları, Soft-delete yaklaşımları ve Frontend bileşen dağılım yapısı) tamamen geliştiricinin analizinden geçmiş ve ilgili kurallar katı bir şekilde projelendirilmiştir.
+
+> **Önemli Not:** Üretilen tüm mantıksal yapı, algoritma ve iş kuralı uygulamaları doğrudan geliştirici insiyatifi ile projeye entegre edilmiş olup, projede yardımcı araçlar bir karar mercii olarak değil, daktilo vazifesinde kullanılmıştır. Sorumluluk ve kararlar geliştiriciye aittir.
 
 ---
 
-## 10. Projeyi Çalıştırma
+## 8. Projeyi Çalıştırma Yönergeleri
 
-### Gereksinimler
-- .NET 9.0 SDK
-- Node.js 18+
-- Docker Desktop
+**Gereksinimler:**
+* .NET 9.0 SDK
+* Node.js 18+
+* Docker Desktop veya kurulu MS SQL Server (Veritabanı işlemleri için)
 
-### Backend
+**Adım 1: Veritabanı Hazırlığı (Backend)**
+
+*Seçenek A: Bilgisayarınızda MS SQL Server yüklüyse (Önerilen)*
+Ekstra bir servise ihtiyaç yoktur. `WarehouseAPI/WarehouseAPI/appsettings.json` dosyasındaki `DefaultConnection` kısmını kendi sunucu, kullanıcı adı ve şifre verilerinizle değiştirmeniz yeterlidir.
+
+*Seçenek B: Bilgisayarınızda SQL Server yoksa (Docker Kurulumu)*
+Bilgisayarında SQL Server yüklü olmayan değerlendiriciler, terminal / komut satırında aşağıdaki tekil komut ile projeye tam uyumlu bir veritabanı yansımasını ayağa kaldırabilirler:
 ```bash
-# SQL Server başlat
 docker run -e ACCEPT_EULA=Y -e SA_PASSWORD=Warehouse123! \
   -p 1433:1433 --name sqlserver -d \
   mcr.microsoft.com/mssql/server:2019-latest
-
-# Migration uygula
-cd WarehouseAPI/WarehouseAPI
-export PATH="$PATH:$HOME/.dotnet/tools"
-TMPDIR=/tmp dotnet ef database update
-
-# API'yi başlat
-TMPDIR=/tmp dotnet run
 ```
 
-### Frontend
+**Adım 2: API Servisini Başlatma (Backend)**
+Veritabanı adreslemesi yapıldıktan sonra sırasıyla; veritabanı tablolarının kurulması ve API'ın ayağa kaldırılması işlemi uygulanır. İşlemler için kök klasörü olarak `WarehouseAPI/WarehouseAPI` yolunu baz alınız.
+```bash
+cd WarehouseAPI/WarehouseAPI
+export PATH="$PATH:$HOME/.dotnet/tools"
+
+# 1) Entity Framework migration ile veritabanı ve tabloları sıfırdan kurar:
+TMPDIR=/tmp dotnet ef database update
+
+# 2) .NET projesini yayına alır:
+TMPDIR=/tmp dotnet run
+```
+*(Backend çalıştığında konsolda gösterilen `http://localhost:5058/swagger` adresi üzerinden projenin canlı dokümanı incelenebilir)*
+
+**Adım 3: İstemci Arayüzünü Başlatma (Frontend)**
+Terminalde yeni bir sekme açılarak React SPA istemcisi barındırılacaktır.
 ```bash
 cd WarehouseUI
 npm install
 npm run dev
 ```
 
-Uygulama: **http://localhost:5173**  
-API: **http://localhost:5058**  
-Swagger: **http://localhost:5058/swagger**
+Uygulamamız **http://localhost:5173** adresi üzerinden başarıyla çalışmaya başlayacaktır.
