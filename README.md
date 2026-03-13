@@ -1,6 +1,6 @@
 # 📦 Smart Warehouse — Akıllı Depo Yönetim Sistemi
 
-![Smart Warehouse Overview](WarehouseUI/public/vite.svg) (*Proje görsel veya logoları için yer tutucu*)
+![Smart Warehouse Overview](WarehouseUI/public/vite.svg) 
 
 Bu proje, çok kiracılı (**Multi-Tenant**) mimari ile tasarlanmış tam yığın (Full-Stack) bir **Akıllı Depo Yönetim Sistemi** uygulamasıdır. Ürünleri sisteme tanımlama, depolara giriş/çıkış (stok hareketi) yapma ve anlık istatistikleri takip edebilme özelliklerine sahiptir.
 
