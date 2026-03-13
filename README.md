@@ -1,4 +1,4 @@
-# 📦 Smart Warehouse — Akıllı Depo Yönetim Sistemi
+#  Smart Warehouse — Akıllı Depo Yönetim Sistemi
 
 ![Smart Warehouse Overview](WarehouseUI/public/vite.svg) 
 
@@ -8,16 +8,16 @@ Endüstri standartlarında **Katmanlı Mimari (N-Tier)** kullanılarak .NET 9.0 
 
 ---
 
-## 🚀 Öne Çıkan Özellikler
+## Öne Çıkan Özellikler
 
-*   🔒 **Multi-Tenant Güvenlik:** Aynı veritabanı içerisinde birden fazla şirketin (Company) verisi %100 izole edilerek yönetilir. Bir şirketin, başka bir şirketin verilerine (Okuma/Yazma) erişmesi imkansızdır.
-*   🗑️ **Soft Delete Stratejisi:** Hiçbir veri veritabanından fiziksel olarak silinmez. Tüm yapılar `IsDeleted` bayraklarıyla yönetilir, böylece veri geçmişi (Data Integrity) daima korunur.
-*   📄 **Server-Side Pagination:** Milyonlarca satır veri bile olsa, API tarafında veritabanından sadece o sayfanın ihtiyacı kadar veri (`Skip` ve `Take` ile) çekilir. Arayüz asla donmaz.
-*   🎨 **Modern Kullanıcı Arayüzü:** React ve Material-UI (MUI) kullanılarak "Tek Sayfa (SPA)" ve karanlık tema (Dark Mode) destekli dinamik bir kontrol paneli sunulur.
+*    **Multi-Tenant Güvenlik:** Aynı veritabanı içerisinde birden fazla şirketin (Company) verisi %100 izole edilerek yönetilir. Bir şirketin, başka bir şirketin verilerine (Okuma/Yazma) erişmesi imkansızdır.
+*    **Soft Delete Stratejisi:** Hiçbir veri veritabanından fiziksel olarak silinmez. Tüm yapılar `IsDeleted` bayraklarıyla yönetilir, böylece veri geçmişi (Data Integrity) daima korunur.
+*    **Server-Side Pagination:** Milyonlarca satır veri bile olsa, API tarafında veritabanından sadece o sayfanın ihtiyacı kadar veri (`Skip` ve `Take` ile) çekilir. Arayüz asla donmaz.
+*    **Modern Kullanıcı Arayüzü:** React ve Material-UI (MUI) kullanılarak "Tek Sayfa (SPA)" ve karanlık tema (Dark Mode) destekli dinamik bir kontrol paneli sunulur.
 
 ---
 
-## 🛠️ Kullanılan Teknolojiler
+##  Kullanılan Teknolojiler
 
 ### Backend (.NET Core)
 *   **Web API:** .NET 9.0 (C#)
@@ -33,7 +33,7 @@ Endüstri standartlarında **Katmanlı Mimari (N-Tier)** kullanılarak .NET 9.0 
 
 ---
 
-## ⚙️ Kurulum ve Çalıştırma
+##  Kurulum ve Çalıştırma
 
 Projeyi kendi bilgisayarınızda saniyeler içinde ayağa kaldırmak için aşağıdaki adımları izleyebilirsiniz.
 
@@ -73,7 +73,7 @@ Uygulamayı tarayıcınızdan **`http://localhost:5173`** adresine giderek hemen
 
 ---
 
-## 📝 Daha Fazla Detay İçin
+##  Daha Fazla Detay İçin
 
 Uygulamanın mimari kararları, tasarım seçimleri, yapay zekanın (AI) projedeki yeri ve karşılaşılan çevresel hataların nasıl çözüldüğüne dair teknik tüm okumalar için ana dizinde bulunan **[CALISMA_RAPORU.md](./CALISMA_RAPORU.md)** dosyasını inceleyebilirsiniz.
 
