@@ -78,4 +78,4 @@ Uygulamayı tarayıcınızdan **`http://localhost:5173`** adresine giderek hemen
 Uygulamanın mimari kararları, tasarım seçimleri, yapay zekanın (AI) projedeki yeri ve karşılaşılan çevresel hataların nasıl çözüldüğüne dair teknik tüm okumalar için ana dizinde bulunan **[CALISMA_RAPORU.md](./CALISMA_RAPORU.md)** dosyasını inceleyebilirsiniz.
 
 ---
-*Bu proje, yetenek değerleme (Developer Case) mülakatı kapsamında tasarlanmış ve geliştirilmiştir.*
+
