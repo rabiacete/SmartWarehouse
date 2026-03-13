@@ -22,8 +22,8 @@ const darkTheme = createTheme({
     primary: { main: '#6366f1' },
     success: { main: '#4ade80' },
     error: { main: '#f87171' },
-    background: { default: '#0f1117', paper: '#1a1d27' },
-    text: { primary: '#e4e4e7', secondary: '#71717a' },
+    background: { default: '#1a1d2e', paper: '#242840' },
+    text: { primary: '#e4e4e7', secondary: '#94a3b8' },
   },
   typography: {
     fontFamily: "'Inter', -apple-system, sans-serif",
@@ -32,14 +32,14 @@ const darkTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
-          '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.25) !important' },
+          '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
+          '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3) !important' },
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
-        root: { borderColor: 'rgba(255,255,255,0.07)' },
+        root: { borderColor: 'rgba(255,255,255,0.09)' },
       },
     },
   },

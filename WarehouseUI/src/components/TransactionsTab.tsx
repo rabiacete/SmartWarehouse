@@ -75,8 +75,18 @@ export default function TransactionsTab() {
     } finally { setSaving(false); }
   };
 
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formatDate = (d: string) => {
+    // Backend UTC olarak kaydediyor. String'in sonunda 'Z' yoksa tarayıcı yanlış yorumluyor.
+    // Sona 'Z' ekleyerek UTC olduğunu garantiliyoruz; toLocaleString yerel saate otomatik çevirir.
+    const utcStr = d.endsWith('Z') ? d : d + 'Z';
+    return new Date(utcStr).toLocaleString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const tableStyle = { background: 'rgba(26,29,39,0.9)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 3 };
   const thStyle = { fontWeight: 700, color: 'text.secondary', borderColor: 'rgba(255,255,255,0.07)' };

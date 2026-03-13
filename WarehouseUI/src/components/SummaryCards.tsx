@@ -72,11 +72,26 @@ export default function SummaryCards({ summary }: Props) {
   ];
 
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 2,
+        mb: 3,
+        // Responsive: 2 sütun (tablet), 1 sütun (telefon)
+        '@media (max-width: 900px)': {
+          gridTemplateColumns: 'repeat(2, 1fr)',
+        },
+        '@media (max-width: 560px)': {
+          gridTemplateColumns: '1fr',
+        },
+      }}
+    >
       {cards.map((card) => (
-        <Box key={card.label} sx={{ flex: '1 1 280px', minWidth: 200 }}>
+        <Box key={card.label} sx={{ minWidth: 220 }}>
           <Card
             sx={{
+              height: '100%',
               background: 'rgba(26,29,39,0.9)',
               border: '1px solid rgba(255,255,255,0.07)',
               borderRadius: 3,
