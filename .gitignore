@@ -1,0 +1,18 @@
+# Backend (C# / .NET) Ignore Kuralları
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+.vs/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Frontend (Node.js / React) Ignore Kuralları
+node_modules/
+dist/
+build/
+.env
+
+# MacOS İşletim Sistemi Ignore Kuralları
+.DS_Store
